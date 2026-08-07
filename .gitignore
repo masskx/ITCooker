@@ -14,7 +14,7 @@ dist/
 wheels/
 *.whl
 *.egg
-
+.idea/
 # 测试 / 静态分析缓存
 .pytest_cache/
 .mypy_cache/
