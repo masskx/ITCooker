@@ -1,0 +1,2 @@
+# 这是一个python 开发的项目
+使用主流langchain，langgraph搭建项目，名字是ITCooker专门为程序员准备的AI私厨智能体平台

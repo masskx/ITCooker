@@ -1,0 +1,151 @@
+# ========== Python 通用 ==========
+
+# 字节码 / 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 构建产物
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+*.whl
+*.egg
+
+# 测试 / 静态分析缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.cache/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+pyvenv.cfg
+
+# ========== AI 智能体 / 机器学习 ==========
+
+# 向量数据库 / 索引 / 嵌入缓存
+*.index
+*.bin
+*.npy
+vectorstore/
+vector_stores/
+chroma*/
+faiss*/
+milvus*/
+weaviate*/
+qdrant*/
+*.parquet
+*.arrow
+
+# 模型权重（大文件，不入库）
+*.pth
+*.pt
+*.onnx
+*.h5
+*.hdf5
+*.pb
+*.tflite
+models/
+model_weights/
+weights/
+
+# 智能体运行时产物：日志、会话、临时数据、工具执行缓存
+agent_logs/
+agent_cache/
+session_data/
+*.session
+*.chat
+*.conversation
+worktrees/
+tmp_artifacts/
+
+# ========== Docker / docker-compose ==========
+
+# 数据卷（bind mount 到宿主机的目录，一般不入库）
+volumes/
+volume/
+data/
+pgdata/
+redis-data/
+mongo-data/
+elasticsearch-data/
+mysql-data/
+postgres-data/
+
+# docker-compose 本地覆盖文件（可选，若团队约定保留可删除此条）
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# 容器内生成的文件
+.docker/
+*.container
+
+# ========== 环境变量与密钥 ==========
+
+# 环境变量文件（含密钥，绝不能提交）
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# 密钥 / 凭据
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+*.p8
+id_rsa
+id_ed25519
+credentials.json
+secrets/
+*.secret
+*.token
+
+# ========== 数据库文件 ==========
+
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sql
+!*.schema.sql
+
+# ========== 日志 ==========
+
+logs/
+*.log
+*.log.*
+*.err
+*.out
+
+# ========== 编辑器 / IDE ==========
+
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
