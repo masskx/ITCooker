@@ -1,8 +1,10 @@
+import json
 import logging
 
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 
+from processor.import_processor.base import setup_logging
 from processor.import_processor.nodes.a_node_entry import NodeEntry
 from processor.import_processor.nodes.b_node_pdf_to_md import NodePDFToMD
 from processor.import_processor.nodes.c_node_md_img import NodeMDImg
@@ -76,7 +78,22 @@ class KBImportWorkflow:
 
         return graph.compile()
 
+    def run(self,state:ImportGraphState,stream:bool=False):
+        if stream:
+            return self.graph.stream(state,stream_mode="values")
+        else:
+            return self.graph.invoke(state)
+
 if __name__ == "__main__":
+    setup_logging()
     workflow = KBImportWorkflow()
-    graph = workflow.graph
-    print(graph)
+    init_state = {
+        "import_file_path":r"D:\main.pdf"
+    }
+    # for event in workflow.run(init_state,stream=True):
+    #     print(f"state:{event}")
+
+    final_state = workflow.run(init_state,stream=False)
+    print(json.dumps(final_state,ensure_ascii=False,indent=4))
+
+
