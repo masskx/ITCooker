@@ -36,5 +36,6 @@ class NodeEntry(BaseNode):
             raise ValidationError(message=f"该文件的后缀格式{import_file_path_obj.suffix}不支持")
         # 获取文件上传的标题更新到state中
         state["file_title"] = import_file_path_obj.stem
+        state["file_dir"] = r"D:\output"
         print(f"state{state}")
         return state
