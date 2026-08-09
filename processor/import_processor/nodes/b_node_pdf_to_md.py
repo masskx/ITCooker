@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+import zipfile
 
 from pathlib import Path
 
@@ -146,9 +147,30 @@ class NodePDFToMD(BaseNode):
 
         return "上传url"
 
-    def _step_3_download_and_extract(self, zip_url, output_dir_obj, stem):
+    def _step_3_download_and_extract(self, zip_url, output_dir_obj, pdf_stem):
         logging.info("下载并解压改名")
-        return "md_path"
+        # 下载
+        response = requests.get(zip_url)
+        if response.status_code != 200:
+            raise FileProcessingError(message=f"获得下载文件失败：{response.text}")
+        zip_save_path = output_dir_obj / (f"{pdf_stem}_result.zip")
+        with open(zip_save_path, "wb") as f:
+            f.write(response.content)
+        # 创建目录
+        extract_target_dir = output_dir_obj / pdf_stem
+        extract_target_dir.mkdir(parents=True, exist_ok=True)
+        # 解压
+        with zipfile.ZipFile(zip_save_path, 'r') as zip_file_obj:
+            zip_file_obj.extractall(extract_target_dir)
+        self.logger.info(f"文件压包成功！")
+        # 改名
+        self.logger.info(f"文件重命名")
+        target_md_file = extract_target_dir / f"full.md"
+        new_md_path = target_md_file.with_name(f"{pdf_stem}.md")
+        target_md_file.rename(new_md_path)
+        self.logger.info(f"文件重命名成功！{new_md_path}")
+
+        return str(new_md_path.absolute()) # 返回绝对路径
 
 if __name__ == '__main__':
     setup_logging()
