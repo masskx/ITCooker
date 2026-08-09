@@ -1,11 +1,14 @@
 import json
 import logging
+import time
+
 from pathlib import Path
 
-from numpy.distutils.core import setup
+import requests
 
+from config.mineru_config import mineru_config
 from processor.import_processor.base import BaseNode, setup_logging
-from processor.import_processor.exceptions import StateFieldError, FileProcessingError
+from processor.import_processor.exceptions import StateFieldError, FileProcessingError, PdfConversionError
 from processor.import_processor.state import ImportGraphState
 
 
@@ -21,6 +24,7 @@ class NodePDFToMD(BaseNode):
         pdf_path_obj,output_dir_obj = self._step_1_validate_paths(state)
         # 获取上传链接并上传到MinerU服务器
         zip_url = self._step_2_upload_and_poll(pdf_path_obj)
+        print(f"获取下载地址{zip_url}")
         # 下载zip文件并解压
         md_path = self._step_3_download_and_extract(zip_url,output_dir_obj,pdf_path_obj.stem)
         # 读取文件
@@ -59,7 +63,87 @@ class NodePDFToMD(BaseNode):
         return pdf_path_obj,output_dir_obj
 
     def _step_2_upload_and_poll(self, pdf_path_obj):
+        """
+        上传
+        :param pdf_path_obj:
+        :return:
+        """
         logging.info("上传文件到服务器")
+        # 校验api_token
+        api_token = mineru_config.api_token
+        base_url = mineru_config.base_url
+        if not api_token:
+            raise FileProcessingError(message="api_token未配置")
+        if not base_url:
+            raise FileProcessingError(message="base_url未配置")
+        # 申请上传链接post
+        header = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_token}"
+        }
+        data = {
+            "files": [
+                {
+                    "name": pdf_path_obj.name,
+                }
+            ],
+            "model_version": "vlm"
+        }
+        url = f"{base_url}/file-urls/batch"
+        print(f"申请上传链接接口：{url}")
+        response = requests.post(url, headers=header, json=data)
+        if response.status_code != 200:
+            raise FileProcessingError(message=f"申请文件上传失败：{response.text}")
+
+        result = response.json()
+        print('response success. result:{}'.format(result))
+        if result["code"] != 0:
+            raise FileProcessingError(message=f"申请文件上传失败{result.get('message')}")
+        batch_id = result["data"]["batch_id"]
+        signed_url = result["data"]["file_urls"]
+
+        print('batch_id:{},urls:{}'.format(batch_id, signed_url))
+        #上传文件put
+        with open(pdf_path_obj, 'rb') as f:
+            res_upload = requests.put(signed_url[0], data=f)
+            if res_upload.status_code == 200:
+                self.logger.info(f"文件上传成功！")
+            else:
+                raise PdfConversionError(f"文件上传失败，状态码：{res_upload.status_code},响应结果：{res_upload}")
+        # 获取下载链接get
+        poll_url = f"{base_url}/extract-results/batch/{batch_id}" # 检查转化结果的接口
+        start_time = time.time() # 记录开始时间
+        timeout_seconds = 600 #最大超时时间
+        poll_interval = 3 #轮询间隔时间
+
+        while True:
+            end_time = time.time() - start_time
+            if end_time > timeout_seconds:
+                raise FileProcessingError(message="获得下载地址超时")
+            try:
+                res_poll = requests.get(url=poll_url,headers=header,timeout=10) # 获得下载链接
+            except Exception as e:
+                self.logger.error(f"轮询接口异常：{e}")
+                time.sleep(poll_interval)
+                continue
+            if res_poll.status_code != 200:
+                raise FileProcessingError(message=f"轮询失败,HTTP状态码：{res_poll.status_code}，响应内容：{res_poll}")
+            poll_data = res_poll.json() # 请求成功，不代表任务成功
+            if poll_data.get("code") != 0:
+                raise FileProcessingError(message=f"轮询失败,错误信息：{poll_data.get('message')}")
+            print(f"轮询成功，响应内容：{poll_data}")
+            extract_results = poll_data['data']['extract_result'] # 任务结果
+            extract_result = extract_results[0] # 下载链接
+            extract_state = extract_result["state"] # 下载链接对象
+            if extract_state == "done":
+                full_zip_url = extract_result["full_zip_url"] # 获取下载链接
+                return full_zip_url
+            elif extract_state == "failed":
+                pass
+            else:
+                self.logger.info(f"任务处理中，已耗时{end_time}秒，轮询状态：{extract_state}，batch_id：{batch_id}")
+                time.sleep(poll_interval)
+
         return "上传url"
 
     def _step_3_download_and_extract(self, zip_url, output_dir_obj, stem):
