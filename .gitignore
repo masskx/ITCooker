@@ -89,6 +89,12 @@ elasticsearch-data/
 mysql-data/
 postgres-data/
 
+# Milvus 向量数据库持久化数据
+milvus-data/
+data/etcd/
+data/minio/
+data/milvus/
+
 # docker-compose 本地覆盖文件（可选，若团队约定保留可删除此条）
 docker-compose.override.yml
 docker-compose.override.yaml

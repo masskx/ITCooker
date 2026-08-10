@@ -4,9 +4,7 @@ import time
 import zipfile
 
 from pathlib import Path
-
 import requests
-
 from config.mineru_config import mineru_config
 from processor.import_processor.base import BaseNode, setup_logging
 from processor.import_processor.exceptions import StateFieldError, FileProcessingError, PdfConversionError
@@ -17,9 +15,7 @@ class NodePDFToMD(BaseNode):
     """
     PDF 转 Markdown 节点：PDF结构化解析
     """
-
     name = "node_pdf_to_md"
-
     def process(self, state: ImportGraphState):
         # 检查获取相关参数
         pdf_path_obj,output_dir_obj = self._step_1_validate_paths(state)
